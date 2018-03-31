@@ -12,6 +12,122 @@ declare -A projectilesDirections
 myProjectile=0
 myIdPlayer=0
 
+# hard-coded directions. Convention: XOFFSETzYOFFSET
+LEFT="-1z0"
+TOP="0z-1"
+RIGHT="1z0"
+BOTTOM="0z1"
+DONOTMOVE="0z0"
+
+# hard-coded rotations of positions
+declare -A rotateClockwise
+rotateClockwise[${LEFT}]=${TOP}
+rotateClockwise[${TOP}]=${RIGHT}
+rotateClockwise[${RIGHT}]=${BOTTOM}
+rotateClockwise[${BOTTOM}]=${LEFT}
+declare -A rotateCounterclockwise
+rotateCounterclockwise[${LEFT}]=${BOTTOM}
+rotateCounterclockwise[${BOTTOM}]=${RIGHT}
+rotateCounterclockwise[${RIGHT}]=${TOP}
+rotateCounterclockwise[${TOP}]=${LEFT}
+
+declare -A movementsMap # DIRECTIONyWANTEDMOVEMENT » action
+movementsMap[${LEFT}y${LEFT}]='move'
+movementsMap[${LEFT}y${TOP}]='hrotate'
+movementsMap[${LEFT}y${BOTTOM}]='trotate'
+movementsMap[${LEFT}y${RIGHT}]='trotate'
+
+movementsMap[${TOP}y${LEFT}]='trotate'
+movementsMap[${TOP}y${TOP}]='move'
+movementsMap[${TOP}y${BOTTOM}]='trotate'
+movementsMap[${TOP}y${RIGHT}]='hrotate'
+
+movementsMap[${BOTTOM}y${LEFT}]='hrotate'
+movementsMap[${BOTTOM}y${TOP}]='trotate'
+movementsMap[${BOTTOM}y${BOTTOM}]='move'
+movementsMap[${BOTTOM}y${RIGHT}]='trotate'
+
+movementsMap[${RIGHT}y${LEFT}]='trotate'
+movementsMap[${RIGHT}y${TOP}]='trotate'
+movementsMap[${RIGHT}y${BOTTOM}]='hrotate'
+movementsMap[${RIGHT}y${RIGHT}]='move'
+
+
+# Determines in which direction we want to go
+# - IGNORES DIRECTION !
+# - the two cells must be next to each other
+function findDirection {
+    currentX=${1}
+    currentY=${2}
+    wantedX=${3}
+    wantedY=${4}
+
+    diffx=$((wantedX - currentX))
+    diffy=$((wantedY - currentY))
+    funResult_findDirection="${diffx}z${diffy}"
+}
+
+function findDirectionTest {
+    findDirection 5 5 6 5
+    echo "(0,0) » (1,0). Expected: ${RIGHT}. Got: ${funResult_findDirection}"
+
+    findDirection 4 2 3 2
+    echo "(4,2) » (3,2). Expected: ${LEFT}. Got: ${funResult_findDirection}"
+
+    findDirection 2 7 2 8
+    echo "(2,7) » (2,8). Expected: ${BOTTOM}. Got: ${funResult_findDirection}"
+
+    findDirection 10 3 10 2
+    echo "(10,3) » (10,2). Expected: ${TOP}. Got: ${funResult_findDirection}"
+}
+
+# Determines which action should be done to go in a direction, taking into
+# account current direction
+function findMovementAction {
+    currentDirection=${1}
+    wantedMovement=${2}
+
+    if [ "${wantedMovement}" = "${DONOTMOVE}" ]; then
+        funResult_findMovementAction=''
+        return 0
+    else
+        funResult_findMovementAction=${movementsMap[${currentDirection}y${wantedMovement}]}
+    fi
+}
+
+function findMovementActionTestAtomic {
+    findMovementAction "${1}" "${2}" "${3}"
+    echo -n "Facing ${1}. Want ${2}. Expect ${3}. "
+
+    if [ "${funResult_findMovementAction}" = "${3}" ]; then
+        echo PASS
+    else
+        echo FAIL
+    fi
+}
+
+function findMovementActionTest {
+    findMovementActionTestAtomic ${RIGHT} ${DONOTMOVE} ''
+    findMovementActionTestAtomic ${BOTTOM} ${DONOTMOVE} ''
+    findMovementActionTestAtomic ${LEFT} ${DONOTMOVE} ''
+    findMovementActionTestAtomic ${TOP} ${DONOTMOVE} ''
+
+    findMovementActionTestAtomic ${RIGHT} ${LEFT} 'trotate'
+    findMovementActionTestAtomic ${LEFT} ${RIGHT} 'trotate'
+    findMovementActionTestAtomic ${TOP} ${BOTTOM} 'trotate'
+    findMovementActionTestAtomic ${BOTTOM} ${TOP} 'trotate'
+
+    findMovementActionTestAtomic ${RIGHT} ${BOTTOM} 'hrotate'
+    findMovementActionTestAtomic ${BOTTOM} ${LEFT} 'hrotate'
+    findMovementActionTestAtomic ${LEFT} ${UP} 'hrotate'
+    findMovementActionTestAtomic ${UP} ${RIGHT} 'hrotate'
+
+    findMovementActionTestAtomic ${RIGHT} ${TOP} 'trotate'
+    findMovementActionTestAtomic ${TOP} ${LEFT} 'trotate'
+    findMovementActionTestAtomic ${LEFT} ${BOTTOM} 'trotate'
+    findMovementActionTestAtomic ${BOTTOM} ${RIGHT} 'trotate'
+}
+
 function handleInit {
     echo "Handle init"
     json=$1
