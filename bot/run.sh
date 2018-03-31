@@ -10,7 +10,7 @@ currentType="init"
 while true;
 do 
     line=$(head -n1 <&3)
-    run "$line" $currentType
+    echo $(time run "$line" $currentType)
 
     case $currentType in
         init)
