@@ -1,0 +1,416 @@
+{
+    "map": [
+        {
+            "cassable": false,
+            "pos": [
+                0,
+                0
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                0,
+                1
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                0,
+                2
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                0,
+                3
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                0,
+                4
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                0,
+                5
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                0,
+                6
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                0,
+                7
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                0,
+                8
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                1,
+                0
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                1,
+                1
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                1,
+                2
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                1,
+                3
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                1,
+                4
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                1,
+                5
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                1,
+                6
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                1,
+                7
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                1,
+                8
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                2,
+                0
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                2,
+                1
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                2,
+                7
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                2,
+                8
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                3,
+                0
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                3,
+                1
+            ]
+        },
+        {
+            "points": 10,
+            "pos": [
+                3,
+                3
+            ]
+        },
+        {
+            "points": 10,
+            "pos": [
+                3,
+                5
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                3,
+                7
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                3,
+                8
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                4,
+                0
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                4,
+                1
+            ]
+        },
+        {
+            "points": 10,
+            "pos": [
+                4,
+                4
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                4,
+                7
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                4,
+                8
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                5,
+                0
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                5,
+                1
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                5,
+                7
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                5,
+                8
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                6,
+                0
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                6,
+                1
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                6,
+                2
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                6,
+                3
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                6,
+                4
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                6,
+                5
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                6,
+                6
+            ]
+        },
+        {
+            "cassable": true,
+            "pos": [
+                6,
+                7
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                6,
+                8
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                7,
+                0
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                7,
+                1
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                7,
+                2
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                7,
+                3
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                7,
+                4
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                7,
+                5
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                7,
+                6
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                7,
+                7
+            ]
+        },
+        {
+            "cassable": false,
+            "pos": [
+                7,
+                8
+            ]
+        }
+    ],
+    "joueurs": [
+        {
+            "id": 2,
+            "position": [
+                3,
+                6
+            ],
+            "direction": [
+                0,
+                -1
+            ],
+            "score": 0
+        },
+        {
+            "id": 1,
+            "position": [
+                3,
+                6
+            ],
+            "direction": [
+                0,
+                -1
+            ],
+            "score": 0
+        }
+    ],
+    "idJoueur": 2
+}
