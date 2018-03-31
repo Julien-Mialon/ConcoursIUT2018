@@ -9,6 +9,8 @@ declare -A playerScores
 declare -A projectilesPositions
 declare -A projectilesDirections
 
+declare -A mapFlower 
+
 myProjectile=0
 myIdPlayer=0
 
@@ -175,6 +177,191 @@ function removeWall {
     echo "remove wall: " $posX $posY "(" $value ")"
 }
 
+
+function flowApplyOnCase {
+    incX=$1
+    incY=$2
+    newX=$(($3 + $incX))
+    newY=$(($4 + $incY))
+    key=$(echo $newX"z"$newY)
+    flowMapValue=${mapArray[$key]}
+    mapFlower[$key]=$5
+
+    if [ -z $flowMapValue ]; then
+        flowArrayPositions[$writeIndex]=$newX
+        flowArrayPositions[$writeNextIndex]=$newY
+
+        writeIndex=$(($writeIndex + 1))
+        writeNextIndex=$(($writeNextIndex + 1))
+
+    elif [ $flowMapValue = "p" ]; then
+        funResult_flowNow=$(echo $newX $newY)
+    elif [ $flowMapValue = "x" ]; then
+        flowArrayPositions[$writeIndex]=$newX
+        flowArrayPositions[$writeNextIndex]=$newY
+
+        writeIndex=$(($writeIndex + 1))
+        writeNextIndex=$(($writeNextIndex + 1))
+    fi
+}
+
+# $1 = x ; $2 = y
+function flowBackTracking {
+    posX=$1
+    posY=$2
+
+    key=$(echo $posX"z"$posY)
+    curDepth=${mapFlower[$key]}
+    echo "Pos0:" $posX $posY $curDepth
+    while [ $curDepth -gt 1 ]
+    do
+        echo "Pos:" $posX $posY $curDepth
+        nextDepth=$(($curDepth - 1))
+
+        incX=0
+        incY=1
+        newX=$(($incX + $posX))
+        newY=$(($incY + $posY))
+
+        key=$(echo $newX"z"$newY)
+        curDepth=${mapFlower[$key]}
+
+        if [ -n "$curDepth" ]; then
+            if [ $curDepth -eq $nextDepth ]; then
+                posX=$newX
+                posY=$newY
+
+                continue
+            fi
+        fi
+
+        incX=0
+        incY=-1
+        newX=$(($incX + $posX))
+        newY=$(($incY + $posY))
+
+        key=$(echo $newX"z"$newY)
+        curDepth=${mapFlower[$key]}
+
+        if [ -n "$curDepth" ]; then
+            if [ $curDepth -eq $nextDepth ]; then
+                posX=$newX
+                posY=$newY
+
+                continue
+            fi
+        fi
+
+        incX=1
+        incY=0
+        newX=$(($incX + $posX))
+        newY=$(($incY + $posY))
+
+        key=$(echo $newX"z"$newY)
+        curDepth=${mapFlower[$key]}
+
+        if [ -n "$curDepth" ]; then
+            if [ $curDepth -eq $nextDepth ]; then
+                posX=$newX
+                posY=$newY
+
+                continue
+            fi
+        fi
+
+        incX=-1
+        incY=0
+        newX=$(($incX + $posX))
+        newY=$(($incY + $posY))
+
+        key=$(echo $newX"z"$newY)
+        curDepth=${mapFlower[$key]}
+
+        if [ -n "$curDepth" ]; then
+            if [ $curDepth -eq $nextDepth ]; then
+                posX=$newX
+                posY=$newY
+
+                continue
+            fi
+        fi
+    done
+
+    if [ $curDepth -eq 1 ]; then
+        funResult_flowBackTracking=$(echo $posX $posY)
+        return 0
+    fi
+}
+
+# $1 = x ; $2 = y
+function flowNow {
+    flowArrayPositions=($1 $2)
+    index=0
+    nextIndex=1
+    writeIndex=2
+    writeNextIndex=3
+    flowerKey=$(echo $1"z"$2)
+    mapFlower[$flowerKey]=0
+    while true
+    do
+        posX=${flowArrayPositions[$index]}
+        posY=${flowArrayPositions[$nextIndex]}
+                
+        if [ -z $posX ]; then
+            break
+        fi
+
+        flowerKey=$(echo $posX"z"$posY)
+        curDepth=${mapFlower[$flowerKey]}
+        nextDepth=$(($curDepth + 1))
+
+        if [ $nextDepth -gt 7 ]; then
+            break
+        fi
+        
+        flowApplyOnCase 1 0 $posX $posY $nextDepth
+        echo "flownow #"$funResult_flowNow"#";
+        if [ -n "$funResult_flowNow" ]; then
+            break;
+        fi
+        flowApplyOnCase -1 0 $posX $posY $nextDepth
+        if [ -n "$funResult_flowNow" ]; then
+            break;
+        fi
+        flowApplyOnCase 0 1 $posX $posY $nextDepth
+        if [ -n "$funResult_flowNow" ]; then
+            break;
+        fi
+        flowApplyOnCase 0 -1 $posX $posY $nextDepth
+        if [ -n "$funResult_flowNow" ]; then
+            break;
+        fi
+
+        index=$(($index + 1))
+        nextIndex=$(($nextIndex + 1))
+    done
+
+    if [ -n "$funResult_flowNow" ]; then
+        flowBackTracking $funResult_flowNow
+
+        if [ -n "$funResult_flowBackTracking" ]; then
+            echo "Next position" $funResult_flowBackTracking
+        fi
+    fi
+}
+
+function findBestDirection {
+    unset mapFlower
+    funResult_flowNow=""
+    declare -A mapFlower 
+    depth=8
+    flowNow ${playerPositions[$myIdPlayer]} 0 1 $depth
+
+    if [ -n "$funResult_flowNow" ]; then
+        echo "Find something: " $funResult_flowNow
+    fi
+}
+
 #$1 = x ; $2 = y ; $3 = dirX ; $4 = dirY
 function canMoveForward {
     newX=$(($1 + $3))
@@ -253,6 +440,7 @@ function handleTurn {
         updateLine $line
     done
 
+    findBestDirection
     canMoveForward ${playerPositions[$myIdPlayer]} ${playerDirections[$myIdPlayer]}
     if [ $funResult_canMoveForward = "true" ]; then
         if [ $funResult_shootFirst = "true" ]; then

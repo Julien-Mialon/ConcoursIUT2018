@@ -1,12 +1,16 @@
 #!/bin/bash
 
-echo $0
-echo $1
-echo $2
-echo $3
-echo $4
-echo $5
-echo $6
-echo $7
-echo $8
-echo $9
+arr=(0 1 2 3 4 5 6)
+
+echo ${arr[0]}
+echo ${arr[1]}
+
+arr[12]=42
+
+arr[1]=8
+
+echo ${arr[1]}
+
+echo ${arr[12]}
+
+echo "#"${arr[91]}"#"
