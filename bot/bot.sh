@@ -245,11 +245,11 @@ function handleTurn {
 
     canMoveForward ${playerPositions[$myIdPlayer]} ${playerDirections[$myIdPlayer]}
     if [ $funResult_canMoveForward = "true" ]; then
-        RESULT_IA='["move"]'
+        RESULT_IA='["move", "shoot"]'
         return 0
     fi
 
-    RESULT_IA='["hrotate"]'
+    RESULT_IA='["hrotate", "shoot"]'
 }
 
 # $1 : line json $2 : enum (init, map, turn)
