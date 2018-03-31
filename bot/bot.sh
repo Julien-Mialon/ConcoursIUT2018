@@ -23,19 +23,6 @@ function handleMap {
     echo "id:" $idJoueur
     echo "joueurs:" $joueurs
 
-    for playerJson in $(echo $json | jq -c ".joueurs[]") ; do
-        playerId=$(echo $playerJson | jq .id)
-        playerX=$(echo $playerJson | jq .position[0])
-        playerY=$(echo $playerJson | jq .position[1])
-        playerDirectionX=$(echo $playerJson | jq .direction[0])
-        playerDirectionY=$(echo $playerJson | jq .direction[1])
-        playerScore=$(echo $playerJson | jq .score)
-
-        playerPositions[$playerId]=$(echo $playerX";"$playerY)
-        playerDirections[$playerId]=$(echo $playerDirectionX";"$playerDirectionY)
-        playerScores[$playerId]=$playerScore
-    done
-
     for mapJson in $(echo $json | jq -c ".map[]") ; do
         echo "line:" $mapJson
 
@@ -57,6 +44,22 @@ function handleMap {
 
         key=$(echo $posX";"$posY)
         mapArray[$key]=$type
+    done
+
+    for playerJson in $(echo $json | jq -c ".joueurs[]") ; do
+        playerId=$(echo $playerJson | jq .id)
+        playerX=$(echo $playerJson | jq .position[0])
+        playerY=$(echo $playerJson | jq .position[1])
+        playerDirectionX=$(echo $playerJson | jq .direction[0])
+        playerDirectionY=$(echo $playerJson | jq .direction[1])
+        playerScore=$(echo $playerJson | jq .score)
+
+        playerPositions[$playerId]=$(echo $playerX";"$playerY)
+        playerDirections[$playerId]=$(echo $playerDirectionX";"$playerDirectionY)
+        playerScores[$playerId]=$playerScore
+
+        key=$(echo $playerX";"$playerY)
+        mapArray[$key]=$playerId
     done
 }
 
