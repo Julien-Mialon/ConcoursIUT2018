@@ -78,7 +78,7 @@ function updatePlayerPosition {
     dirY=$5
 
     newX=$(($currentX + $dirX))
-    nexY=$(($currentY + $dirY))
+    newY=$(($currentY + $dirY))
 
     currentPosKey=$(echo $currentX"z"$currentY)
     mapArray[$currentPosKey]=""
@@ -100,7 +100,7 @@ function rotatePlayer {
 
 function removeBonus {
     posX=$1
-    poxY=$2
+    posY=$2
 
     posKey=$(echo $posX"z"$posY)
     value=${mapArray[$posKey]}
@@ -138,7 +138,7 @@ function respawnPlayer {
     newPosKey=$(echo $newX"z"$newY)
     mapArray[$newPosKey]=$id
 
-    echo "Respawn to: " $newX $newY
+    echo "Respawn" $id " from: " $currentX $currentY "to: " $newX $newY
 }
 
 function moveShoot {
@@ -185,8 +185,17 @@ function canMoveForward {
     echo "plop: #"$value"#"
 
     funResult_canMoveForward="false"
+    funResult_shootFirst="false"
     if [ -z $value ]; then
         funResult_canMoveForward="true"
+    elif [ $value = "p" ]; then
+        funResult_canMoveForward="true"
+    elif [ $value = "B" ]; then
+        funResult_canMoveForward="false"
+    else
+        funResult_canMoveForward="true"
+        funResult_shootFirst="true"
+        #elif [ $value = "x" ]; then || value = player
     fi
 }
 
@@ -246,11 +255,18 @@ function handleTurn {
 
     canMoveForward ${playerPositions[$myIdPlayer]} ${playerDirections[$myIdPlayer]}
     if [ $funResult_canMoveForward = "true" ]; then
-        RESULT_IA='["move", "shoot"]'
-        return 0
+        if [ $funResult_shootFirst = "true" ]; then
+            RESULT_IA='["shoot", "move"]'
+        else
+            RESULT_IA='["move", "shoot"]'
+        fi
+    else
+        if [ $funResult_shootFirst = "true" ]; then
+            RESULT_IA='["shoot", "hrotate"]'
+        else
+            RESULT_IA='["hrotate", "shoot"]'
+        fi
     fi
-
-    RESULT_IA='["hrotate", "shoot"]'
 }
 
 # $1 : line json $2 : enum (init, map, turn)
