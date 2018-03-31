@@ -6,3 +6,6 @@ RUN nix-env -i git gnutar gzip
 
 # Bash fun
 RUN nix-env -i coreutils binutils findutils gnused gawk netcat-gnu jq
+
+# Retrieve code
+RUN git clone https://github.com/Julien-Mialon/ConcoursIUT2018.git /bot
