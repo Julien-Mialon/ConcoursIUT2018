@@ -9,11 +9,14 @@ declare -A playerScores
 declare -A projectilesPositions
 declare -A projectilesDirections
 
+myProjectile=0
+myIdPlayer=0
+
 function handleInit {
     echo "Handle init"
     json=$1
     idJoueur=$(echo $json | jq .idJoueur)
-    
+    myIdPlayer=$idJoueur
     echo $idJoueur
 }
 
@@ -92,7 +95,7 @@ function rotatePlayer {
     dirY=$3
 
     playerDirections[$id]=$(echo $dirX $dirY)
-    echo "Rotate player: " $id "from(" $dirX "," $dirY") to " ${playerDirections[$id]}
+    echo "Rotate player: " $id " to " ${playerDirections[$id]}
 }
 
 function removeBonus {
@@ -171,33 +174,53 @@ function removeWall {
     echo "remove wall: " $posX $posY
 }
 
+#$1 = x ; $2 = y ; $3 = dirX ; $4 = dirY
+function canMoveForward {
+    newX=$(($1 + $3))
+    newY=$(($2 + $4))
+
+    currentPosKey=$(echo $newX"z"$newY)
+    value=${mapArray[$currentPosKey]}
+    echo "plop: #"$value"#"
+
+    funResult_canMoveForward="false"
+    if [ -z $value ]; then
+        funResult_canMoveForward="true"
+    fi
+}
+
 function updateLine {
+    #echo "line:arg1: #"$1"#"
+    #echo "line:arg2: #"$2"#"
     case $1 in
-        joueur)
+        "\"joueur\"")
             case $2 in
-                move)
+                "\"move\"")
                     updatePlayerPosition $3 ${playerPositions[$3]} ${playerDirections[$3]} 
                     ;;
-                rotate)
+                "\"rotate\"")
                     rotatePlayer $3 $(echo $5 | cut -d"," -f1) $6
                     ;;
-                recupere_bonus)
+                "\"recupere_bonus\"")
                     removeBonus $(echo $5 | cut -d"," -f1) $6
                     ;;
-                shoot)
+                "\"shoot\"")
                     newShoot $4 $(echo $6 | cut -d"," -f1) $7 $(echo ${10} | cut -d"," -f1) ${11}
+                    if [ $3 = $myIdPlayer ]; then
+                        myProjectile=0
+                    fi
                     ;;
-                respawn)
+                "\"respawn\"")
                     respawnPlayer $3 ${playerPositions[$3]} $(echo $5 | cut -d"," -f1) $6
                     ;;
             esac
             ;;
-        projectile)
+        "\"projectile\"")
             case $2 in
-                move)
+                "\"move\"")
                     moveShoot $3 $(echo $5 | cut -d"," -f1) $6
                     ;;
-                explode)
+                "\"explode\"")
                     explodeShoot $3 $(echo $5 | cut -d"," -f1) $6
                     if [ $9 = "[" ]; then
                         removeWall $(echo ${10} | cut -d"," -f1) ${11}
@@ -216,13 +239,17 @@ function handleTurn {
     echo $json
 
     for itemJson in $(echo $json | jq -c ".[]") ; do
-        #echo "line:" $mapJson
-
         line=$(echo $itemJson | jq ".[]")
         updateLine $line
     done
 
-    RESULT_IA='["hrotate", "shoot"]'
+    canMoveForward ${playerPositions[$myIdPlayer]} ${playerDirections[$myIdPlayer]}
+    if [ $funResult_canMoveForward = "true" ]; then
+        RESULT_IA='["move"]'
+        return 0
+    fi
+
+    RESULT_IA='["hrotate"]'
 }
 
 # $1 : line json $2 : enum (init, map, turn)
