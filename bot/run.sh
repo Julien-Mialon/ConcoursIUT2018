@@ -10,7 +10,7 @@ currentType="init"
 while true;
 do 
     line=$(head -n1 <&3)
-    echo $(time run "$line" $currentType)
+    run "$line" $currentType
 
     case $currentType in
         init)
@@ -18,7 +18,9 @@ do
         map)
             currentType="turn" ;;
         turn)
-            exit ;;
+            #echo "result:" $RESULT_IA
+            echo -e $RESULT_IA >&3
+            ;;
     esac
 done
 #cat <&3

@@ -6,6 +6,8 @@ declare -A mapArray
 declare -A playerPositions
 declare -A playerDirections
 declare -A playerScores
+declare -A projectilesPositions
+declare -A projectilesDirections
 
 function handleInit {
     echo "Handle init"
@@ -34,7 +36,7 @@ function handleMap {
 
         type="none"
         if [ $point != "null" ] ; then
-            type=$point
+            type="p" #bonus without point ($point)
         fi
         if [ $cassable = "false" ] ; then
             type="B" #mur non cassable
@@ -55,31 +57,172 @@ function handleMap {
         playerDirectionY=$(echo $playerJson | jq .direction[1])
         playerScore=$(echo $playerJson | jq .score)
 
-        playerPositions[$playerId]=$(echo $playerX";"$playerY)
-        playerDirections[$playerId]=$(echo $playerDirectionX";"$playerDirectionY)
+        playerPositions[$playerId]=$(echo $playerX" "$playerY)
+        playerDirections[$playerId]=$(echo $playerDirectionX" "$playerDirectionY)
         playerScores[$playerId]=$playerScore
 
         key=$(echo $playerX"z"$playerY)
         mapArray[$key]=$playerId
     done
 
-    for (( x=1; x<=64; x++ ))
-    do
-        for (( y=1; y<=64; y++ ))
-        do
-            key=$(echo $x"z"$y)
-            value=${mapArray[$key]}
+}
 
-            if [ -z $value ]; then
-                mapArray[$key]=" "
-            fi
-        done
-    done
+function updatePlayerPosition {
+    id=$1
+    currentX=$2
+    currentY=$3
+    dirX=$4
+    dirY=$5
+
+    newX=$(($currentX + $dirX))
+    nexY=$(($currentY + $dirY))
+
+    currentPosKey=$(echo $currentX"z"$currentY)
+    mapArray[$currentPosKey]=""
+    playerPositions[$id]=$(echo $newX $newY)
+    newPosKey=$(echo $newX"z"$newY)
+    mapArray[$newPosKey]=$id
+
+    echo "Move to: " $newX $newY
+}
+
+function rotatePlayer {
+    id=$1
+    dirX=$2
+    dirY=$3
+
+    playerDirections[$id]=$(echo $dirX $dirY)
+    echo "Rotate player: " $id "from(" $dirX "," $dirY") to " ${playerDirections[$id]}
+}
+
+function removeBonus {
+    posX=$1
+    poxY=$2
+
+    posKey=$(echo $posX"z"$posY)
+    value=${mapArray[$posKey]}
+
+    if [ $value = "p" ]; then
+        mapArray[$posKey]=""
+    fi
+
+    echo "remove bonus: " $posX $posY
+}
+
+function newShoot {
+    id=$1
+    posX=$2
+    posY=$3
+    dirX=$4
+    dirY=$5
+
+    projectilesPositions[$id]=$(echo $posX $posY)
+    projectilesDirections[$id]=$(echo $dirX $dirY)
+
+    echo "new shoot: " $id $posX $posY $dirX $dirY
+}
+
+function respawnPlayer {
+    id=$1
+    currentX=$2
+    currentY=$3
+    newX=$4
+    newY=$5
+
+    currentPosKey=$(echo $currentX"z"$currentY)
+    mapArray[$currentPosKey]=""
+    playerPositions[$id]=$(echo $newX $newY)
+    newPosKey=$(echo $newX"z"$newY)
+    mapArray[$newPosKey]=$id
+
+    echo "Respawn to: " $newX $newY
+}
+
+function moveShoot {
+    id=$1
+    posX=$2
+    posY=$3
+
+    projectilesPositions[$id]=$(echo $posX $posY)
+
+    echo "move shoot: " $id $posX $posY
+}
+
+function explodeShoot {
+    id=$1
+    posX=$2
+    posY=$3
+
+    unset projectilesPositions[$id]
+
+    echo "explode shoot: " $id $posX $posY
+}
+
+function removeWall {
+    posX=$1
+    posY=$2
+
+    key=$(echo $posX"z"$posY)
+    value=${mapArray[$key]}
+    if [ value = "x" ]; then
+        unset mapArray[$key]
+    fi
+
+    echo "remove wall: " $posX $posY
+}
+
+function updateLine {
+    case $1 in
+        joueur)
+            case $2 in
+                move)
+                    updatePlayerPosition $3 ${playerPositions[$3]} ${playerDirections[$3]} 
+                    ;;
+                rotate)
+                    rotatePlayer $3 $(echo $5 | cut -d"," -f1) $6
+                    ;;
+                recupere_bonus)
+                    removeBonus $(echo $5 | cut -d"," -f1) $6
+                    ;;
+                shoot)
+                    newShoot $4 $(echo $6 | cut -d"," -f1) $7 $(echo ${10} | cut -d"," -f1) ${11}
+                    ;;
+                respawn)
+                    respawnPlayer $3 ${playerPositions[$3]} $(echo $5 | cut -d"," -f1) $6
+                    ;;
+            esac
+            ;;
+        projectile)
+            case $2 in
+                move)
+                    moveShoot $3 $(echo $5 | cut -d"," -f1) $6
+                    ;;
+                explode)
+                    explodeShoot $3 $(echo $5 | cut -d"," -f1) $6
+                    if [ $9 = "[" ]; then
+                        removeWall $(echo ${10} | cut -d"," -f1) ${11}
+                    fi
+                    ;;
+            esac
+            ;;
+        
+    esac
 }
 
 function handleTurn {
     echo "Handle turn"
     json=$1
+
+    echo $json
+
+    for itemJson in $(echo $json | jq -c ".[]") ; do
+        #echo "line:" $mapJson
+
+        line=$(echo $itemJson | jq ".[]")
+        updateLine $line
+    done
+
+    RESULT_IA='["hrotate", "shoot"]'
 }
 
 # $1 : line json $2 : enum (init, map, turn)
