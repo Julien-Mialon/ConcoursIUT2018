@@ -167,11 +167,12 @@ function removeWall {
 
     key=$(echo $posX"z"$posY)
     value=${mapArray[$key]}
-    if [ value = "x" ]; then
-        unset mapArray[$key]
+    if [ $value = "x" ]; then
+        echo "wall removed"
+        mapArray[$key]=""
     fi
 
-    echo "remove wall: " $posX $posY
+    echo "remove wall: " $posX $posY "(" $value ")"
 }
 
 #$1 = x ; $2 = y ; $3 = dirX ; $4 = dirY

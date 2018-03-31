@@ -23,7 +23,7 @@ echo "port=${port}"
 source ./bot.sh
 
 exec 3<>/dev/tcp/${host}/${port}
-echo -e '{"nickname": "Bash Binder"}' >&3
+echo -e '{"nickname": "BashBinder"}' >&3
 
 currentType="init"
 
