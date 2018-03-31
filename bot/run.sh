@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Arguments parting
 usage="run.sh [host] [port]"
