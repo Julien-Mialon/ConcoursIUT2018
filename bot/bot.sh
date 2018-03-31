@@ -1,5 +1,6 @@
 #!/bin/bash
 #set -eux
+#set -ux
 
 declare -A mapArray
 declare -A playerPositions
@@ -24,7 +25,7 @@ function handleMap {
     echo "joueurs:" $joueurs
 
     for mapJson in $(echo $json | jq -c ".map[]") ; do
-        echo "line:" $mapJson
+        #echo "line:" $mapJson
 
         point=$(echo $mapJson | jq .points)
         cassable=$(echo $mapJson | jq .cassable)
@@ -62,14 +63,16 @@ function handleMap {
         mapArray[$key]=$playerId
     done
 
-    for (( x=1; x<=100; x++ ))
+    for (( x=1; x<=64; x++ ))
     do
-        for (( y=1; y<=100; y++ ))
+        for (( y=1; y<=64; y++ ))
         do
             key=$(echo $x"z"$y)
-            value=$mapArray[$key]
+            value=${mapArray[$key]}
 
-            echo $value
+            if [ -z $value ]; then
+                mapArray[$key]=" "
+            fi
         done
     done
 }
