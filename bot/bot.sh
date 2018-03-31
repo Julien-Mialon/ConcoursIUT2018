@@ -1,10 +1,10 @@
 #!/bin/bash
 #set -eux
 
-declare -a mapArray
-declare -a playerPositions
-declare -a playerDirections
-declare -a playerScores
+declare -A mapArray
+declare -A playerPositions
+declare -A playerDirections
+declare -A playerScores
 
 function handleInit {
     echo "Handle init"
@@ -36,14 +36,14 @@ function handleMap {
             type=$point
         fi
         if [ $cassable = "false" ] ; then
-            type="~" #mur non cassable
+            type="B" #mur non cassable
         fi
         if [ $cassable = "true" ] ; then
             type="x" #mur cassable
         fi
 
-        key=$(echo $posX";"$posY)
-        mapArray[$key]=$type
+        key=$(echo $posX"z"$posY)
+        mapArray["$key"]=$type
     done
 
     for playerJson in $(echo $json | jq -c ".joueurs[]") ; do
@@ -58,8 +58,19 @@ function handleMap {
         playerDirections[$playerId]=$(echo $playerDirectionX";"$playerDirectionY)
         playerScores[$playerId]=$playerScore
 
-        key=$(echo $playerX";"$playerY)
+        key=$(echo $playerX"z"$playerY)
         mapArray[$key]=$playerId
+    done
+
+    for (( x=1; x<=100; x++ ))
+    do
+        for (( y=1; y<=100; y++ ))
+        do
+            key=$(echo $x"z"$y)
+            value=$mapArray[$key]
+
+            echo $value
+        done
     done
 }
 

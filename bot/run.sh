@@ -17,6 +17,8 @@ do
             currentType="map" ;;
         map)
             currentType="turn" ;;
+        turn)
+            exit ;;
     esac
 done
 #cat <&3
