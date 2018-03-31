@@ -69,20 +69,6 @@ function findDirection {
     funResult_findDirection="${diffx}z${diffy}"
 }
 
-function findDirectionTest {
-    findDirection 5 5 6 5
-    echo "(0,0) » (1,0). Expected: ${RIGHT}. Got: ${funResult_findDirection}"
-
-    findDirection 4 2 3 2
-    echo "(4,2) » (3,2). Expected: ${LEFT}. Got: ${funResult_findDirection}"
-
-    findDirection 2 7 2 8
-    echo "(2,7) » (2,8). Expected: ${BOTTOM}. Got: ${funResult_findDirection}"
-
-    findDirection 10 3 10 2
-    echo "(10,3) » (10,2). Expected: ${TOP}. Got: ${funResult_findDirection}"
-}
-
 # Determines which action should be done to go in a direction, taking into
 # account current direction
 function findMovementAction {
@@ -95,39 +81,6 @@ function findMovementAction {
     else
         funResult_findMovementAction=${movementsMap[${currentDirection}y${wantedMovement}]}
     fi
-}
-
-function findMovementActionTestAtomic {
-    findMovementAction "${1}" "${2}" "${3}"
-    echo -n "Facing ${1}. Want ${2}. Expect ${3}. "
-
-    if [ "${funResult_findMovementAction}" = "${3}" ]; then
-        echo PASS
-    else
-        echo FAIL
-    fi
-}
-
-function findMovementActionTest {
-    findMovementActionTestAtomic ${RIGHT} ${DONOTMOVE} ''
-    findMovementActionTestAtomic ${BOTTOM} ${DONOTMOVE} ''
-    findMovementActionTestAtomic ${LEFT} ${DONOTMOVE} ''
-    findMovementActionTestAtomic ${TOP} ${DONOTMOVE} ''
-
-    findMovementActionTestAtomic ${RIGHT} ${LEFT} 'trotate'
-    findMovementActionTestAtomic ${LEFT} ${RIGHT} 'trotate'
-    findMovementActionTestAtomic ${TOP} ${BOTTOM} 'trotate'
-    findMovementActionTestAtomic ${BOTTOM} ${TOP} 'trotate'
-
-    findMovementActionTestAtomic ${RIGHT} ${BOTTOM} 'hrotate'
-    findMovementActionTestAtomic ${BOTTOM} ${LEFT} 'hrotate'
-    findMovementActionTestAtomic ${LEFT} ${UP} 'hrotate'
-    findMovementActionTestAtomic ${UP} ${RIGHT} 'hrotate'
-
-    findMovementActionTestAtomic ${RIGHT} ${TOP} 'trotate'
-    findMovementActionTestAtomic ${TOP} ${LEFT} 'trotate'
-    findMovementActionTestAtomic ${LEFT} ${BOTTOM} 'trotate'
-    findMovementActionTestAtomic ${BOTTOM} ${RIGHT} 'trotate'
 }
 
 function handleInit {
@@ -409,7 +362,7 @@ function flowBackTracking {
     fi
 }
 
-# $1 = x ; $2 = y
+# $1 = x ; $2 = y ; $3 = dirX ; $4 = dirY
 function flowNow {
     flowArrayPositions=($1 $2)
     index=0
@@ -436,7 +389,7 @@ function flowNow {
         fi
         
         flowApplyOnCase 1 0 $posX $posY $nextDepth
-        echo "flownow #"$funResult_flowNow"#";
+
         if [ -n "$funResult_flowNow" ]; then
             break;
         fi
@@ -461,7 +414,9 @@ function flowNow {
         flowBackTracking $funResult_flowNow
 
         if [ -n "$funResult_flowBackTracking" ]; then
-            echo "Next position" $funResult_flowBackTracking
+            findDirection ${playerPositions[$myIdPlayer]} $funResult_flowBackTracking
+
+            findMovementAction $(echo $3"z"$4) $funResult_findDirection
         fi
     fi
 }
@@ -469,9 +424,12 @@ function flowNow {
 function findBestDirection {
     unset mapFlower
     funResult_flowNow=""
+    funResult_flowBackTracking=""
+    funResult_findDirection=""
+    funResult_findMovementAction=""
     declare -A mapFlower 
     depth=8
-    flowNow ${playerPositions[$myIdPlayer]} 0 1 $depth
+    flowNow ${playerPositions[$myIdPlayer]} ${playerDirections[$myIdPlayer]}
 
     if [ -n "$funResult_flowNow" ]; then
         echo "Find something: " $funResult_flowNow
@@ -557,20 +515,27 @@ function handleTurn {
     done
 
     findBestDirection
-    canMoveForward ${playerPositions[$myIdPlayer]} ${playerDirections[$myIdPlayer]}
-    if [ $funResult_canMoveForward = "true" ]; then
-        if [ $funResult_shootFirst = "true" ]; then
-            RESULT_IA='["shoot", "move"]'
+
+    if [ -z $funResult_findMovementAction ]; then
+        canMoveForward ${playerPositions[$myIdPlayer]} ${playerDirections[$myIdPlayer]}
+        if [ $funResult_canMoveForward = "true" ]; then
+            if [ $funResult_shootFirst = "true" ]; then
+                RESULT_IA='["shoot", "move"]'
+            else
+                RESULT_IA='["move", "shoot"]'
+            fi
         else
-            RESULT_IA='["move", "shoot"]'
+            if [ $funResult_shootFirst = "true" ]; then
+                RESULT_IA='["shoot", "hrotate"]'
+            else
+                RESULT_IA='["hrotate", "shoot"]'
+            fi
         fi
     else
-        if [ $funResult_shootFirst = "true" ]; then
-            RESULT_IA='["shoot", "hrotate"]'
-        else
-            RESULT_IA='["hrotate", "shoot"]'
-        fi
+        RESULT_IA='["shoot", "'$funResult_findMovementAction'"]'
     fi
+
+    
 }
 
 # $1 : line json $2 : enum (init, map, turn)
