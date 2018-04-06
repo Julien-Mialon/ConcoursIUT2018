@@ -9,6 +9,8 @@ declare -A playerScores
 declare -A projectilesPositions
 declare -A projectilesDirections
 
+declare -A mapFlower 
+
 myProjectile=0
 myIdPlayer=0
 
@@ -67,20 +69,6 @@ function findDirection {
     funResult_findDirection="${diffx}z${diffy}"
 }
 
-function findDirectionTest {
-    findDirection 5 5 6 5
-    echo "(0,0) » (1,0). Expected: ${RIGHT}. Got: ${funResult_findDirection}"
-
-    findDirection 4 2 3 2
-    echo "(4,2) » (3,2). Expected: ${LEFT}. Got: ${funResult_findDirection}"
-
-    findDirection 2 7 2 8
-    echo "(2,7) » (2,8). Expected: ${BOTTOM}. Got: ${funResult_findDirection}"
-
-    findDirection 10 3 10 2
-    echo "(10,3) » (10,2). Expected: ${TOP}. Got: ${funResult_findDirection}"
-}
-
 # Determines which action should be done to go in a direction, taking into
 # account current direction
 function findMovementAction {
@@ -93,39 +81,6 @@ function findMovementAction {
     else
         funResult_findMovementAction=${movementsMap[${currentDirection}y${wantedMovement}]}
     fi
-}
-
-function findMovementActionTestAtomic {
-    findMovementAction "${1}" "${2}" "${3}"
-    echo -n "Facing ${1}. Want ${2}. Expect ${3}. "
-
-    if [ "${funResult_findMovementAction}" = "${3}" ]; then
-        echo PASS
-    else
-        echo FAIL
-    fi
-}
-
-function findMovementActionTest {
-    findMovementActionTestAtomic ${RIGHT} ${DONOTMOVE} ''
-    findMovementActionTestAtomic ${BOTTOM} ${DONOTMOVE} ''
-    findMovementActionTestAtomic ${LEFT} ${DONOTMOVE} ''
-    findMovementActionTestAtomic ${TOP} ${DONOTMOVE} ''
-
-    findMovementActionTestAtomic ${RIGHT} ${LEFT} 'trotate'
-    findMovementActionTestAtomic ${LEFT} ${RIGHT} 'trotate'
-    findMovementActionTestAtomic ${TOP} ${BOTTOM} 'trotate'
-    findMovementActionTestAtomic ${BOTTOM} ${TOP} 'trotate'
-
-    findMovementActionTestAtomic ${RIGHT} ${BOTTOM} 'hrotate'
-    findMovementActionTestAtomic ${BOTTOM} ${LEFT} 'hrotate'
-    findMovementActionTestAtomic ${LEFT} ${UP} 'hrotate'
-    findMovementActionTestAtomic ${UP} ${RIGHT} 'hrotate'
-
-    findMovementActionTestAtomic ${RIGHT} ${TOP} 'trotate'
-    findMovementActionTestAtomic ${TOP} ${LEFT} 'trotate'
-    findMovementActionTestAtomic ${LEFT} ${BOTTOM} 'trotate'
-    findMovementActionTestAtomic ${BOTTOM} ${RIGHT} 'trotate'
 }
 
 function handleInit {
@@ -291,6 +246,196 @@ function removeWall {
     echo "remove wall: " $posX $posY "(" $value ")"
 }
 
+
+function flowApplyOnCase {
+    incX=$1
+    incY=$2
+    newX=$(($3 + $incX))
+    newY=$(($4 + $incY))
+    key=$(echo $newX"z"$newY)
+    flowMapValue=${mapArray[$key]}
+    mapFlower[$key]=$5
+
+    if [ -z $flowMapValue ]; then
+        flowArrayPositions[$writeIndex]=$newX
+        flowArrayPositions[$writeNextIndex]=$newY
+
+        writeIndex=$(($writeIndex + 1))
+        writeNextIndex=$(($writeNextIndex + 1))
+
+    elif [ $flowMapValue = "p" ]; then
+        funResult_flowNow=$(echo $newX $newY)
+    elif [ $flowMapValue = "x" ]; then
+        flowArrayPositions[$writeIndex]=$newX
+        flowArrayPositions[$writeNextIndex]=$newY
+
+        writeIndex=$(($writeIndex + 1))
+        writeNextIndex=$(($writeNextIndex + 1))
+    fi
+}
+
+# $1 = x ; $2 = y
+function flowBackTracking {
+    posX=$1
+    posY=$2
+
+    key=$(echo $posX"z"$posY)
+    curDepth=${mapFlower[$key]}
+    echo "Pos0:" $posX $posY $curDepth
+    while [ $curDepth -gt 1 ]
+    do
+        echo "Pos:" $posX $posY $curDepth
+        nextDepth=$(($curDepth - 1))
+
+        incX=0
+        incY=1
+        newX=$(($incX + $posX))
+        newY=$(($incY + $posY))
+
+        key=$(echo $newX"z"$newY)
+        curDepth=${mapFlower[$key]}
+
+        if [ -n "$curDepth" ]; then
+            if [ $curDepth -eq $nextDepth ]; then
+                posX=$newX
+                posY=$newY
+
+                continue
+            fi
+        fi
+
+        incX=0
+        incY=-1
+        newX=$(($incX + $posX))
+        newY=$(($incY + $posY))
+
+        key=$(echo $newX"z"$newY)
+        curDepth=${mapFlower[$key]}
+
+        if [ -n "$curDepth" ]; then
+            if [ $curDepth -eq $nextDepth ]; then
+                posX=$newX
+                posY=$newY
+
+                continue
+            fi
+        fi
+
+        incX=1
+        incY=0
+        newX=$(($incX + $posX))
+        newY=$(($incY + $posY))
+
+        key=$(echo $newX"z"$newY)
+        curDepth=${mapFlower[$key]}
+
+        if [ -n "$curDepth" ]; then
+            if [ $curDepth -eq $nextDepth ]; then
+                posX=$newX
+                posY=$newY
+
+                continue
+            fi
+        fi
+
+        incX=-1
+        incY=0
+        newX=$(($incX + $posX))
+        newY=$(($incY + $posY))
+
+        key=$(echo $newX"z"$newY)
+        curDepth=${mapFlower[$key]}
+
+        if [ -n "$curDepth" ]; then
+            if [ $curDepth -eq $nextDepth ]; then
+                posX=$newX
+                posY=$newY
+
+                continue
+            fi
+        fi
+    done
+
+    if [ $curDepth -eq 1 ]; then
+        funResult_flowBackTracking=$(echo $posX $posY)
+        return 0
+    fi
+}
+
+# $1 = x ; $2 = y ; $3 = dirX ; $4 = dirY
+function flowNow {
+    flowArrayPositions=($1 $2)
+    index=0
+    nextIndex=1
+    writeIndex=2
+    writeNextIndex=3
+    flowerKey=$(echo $1"z"$2)
+    mapFlower[$flowerKey]=0
+    while true
+    do
+        posX=${flowArrayPositions[$index]}
+        posY=${flowArrayPositions[$nextIndex]}
+                
+        if [ -z $posX ]; then
+            break
+        fi
+
+        flowerKey=$(echo $posX"z"$posY)
+        curDepth=${mapFlower[$flowerKey]}
+        nextDepth=$(($curDepth + 1))
+
+        if [ $nextDepth -gt 7 ]; then
+            break
+        fi
+        
+        flowApplyOnCase 1 0 $posX $posY $nextDepth
+
+        if [ -n "$funResult_flowNow" ]; then
+            break;
+        fi
+        flowApplyOnCase -1 0 $posX $posY $nextDepth
+        if [ -n "$funResult_flowNow" ]; then
+            break;
+        fi
+        flowApplyOnCase 0 1 $posX $posY $nextDepth
+        if [ -n "$funResult_flowNow" ]; then
+            break;
+        fi
+        flowApplyOnCase 0 -1 $posX $posY $nextDepth
+        if [ -n "$funResult_flowNow" ]; then
+            break;
+        fi
+
+        index=$(($index + 1))
+        nextIndex=$(($nextIndex + 1))
+    done
+
+    if [ -n "$funResult_flowNow" ]; then
+        flowBackTracking $funResult_flowNow
+
+        if [ -n "$funResult_flowBackTracking" ]; then
+            findDirection ${playerPositions[$myIdPlayer]} $funResult_flowBackTracking
+
+            findMovementAction $(echo $3"z"$4) $funResult_findDirection
+        fi
+    fi
+}
+
+function findBestDirection {
+    unset mapFlower
+    funResult_flowNow=""
+    funResult_flowBackTracking=""
+    funResult_findDirection=""
+    funResult_findMovementAction=""
+    declare -A mapFlower 
+    depth=8
+    flowNow ${playerPositions[$myIdPlayer]} ${playerDirections[$myIdPlayer]}
+
+    if [ -n "$funResult_flowNow" ]; then
+        echo "Find something: " $funResult_flowNow
+    fi
+}
+
 #$1 = x ; $2 = y ; $3 = dirX ; $4 = dirY
 function canMoveForward {
     newX=$(($1 + $3))
@@ -369,20 +514,28 @@ function handleTurn {
         updateLine $line
     done
 
-    canMoveForward ${playerPositions[$myIdPlayer]} ${playerDirections[$myIdPlayer]}
-    if [ $funResult_canMoveForward = "true" ]; then
-        if [ $funResult_shootFirst = "true" ]; then
-            RESULT_IA='["shoot", "move"]'
+    findBestDirection
+
+    if [ -z $funResult_findMovementAction ]; then
+        canMoveForward ${playerPositions[$myIdPlayer]} ${playerDirections[$myIdPlayer]}
+        if [ $funResult_canMoveForward = "true" ]; then
+            if [ $funResult_shootFirst = "true" ]; then
+                RESULT_IA='["shoot", "move"]'
+            else
+                RESULT_IA='["move", "shoot"]'
+            fi
         else
-            RESULT_IA='["move", "shoot"]'
+            if [ $funResult_shootFirst = "true" ]; then
+                RESULT_IA='["shoot", "hrotate"]'
+            else
+                RESULT_IA='["hrotate", "shoot"]'
+            fi
         fi
     else
-        if [ $funResult_shootFirst = "true" ]; then
-            RESULT_IA='["shoot", "hrotate"]'
-        else
-            RESULT_IA='["hrotate", "shoot"]'
-        fi
+        RESULT_IA='["shoot", "'$funResult_findMovementAction'"]'
     fi
+
+    
 }
 
 # $1 : line json $2 : enum (init, map, turn)
